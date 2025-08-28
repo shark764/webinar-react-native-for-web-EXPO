@@ -1,8 +1,10 @@
+import Button from "@/src/components/button";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Dimensions,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,10 +15,11 @@ import {
   PanGestureHandlerGestureEvent,
 } from "react-native-gesture-handler";
 import {
-  Button,
   Card,
+  Dialog,
   Divider,
   List,
+  Portal,
   Surface,
   Text,
   useTheme,
@@ -38,6 +41,15 @@ type ContextType = {
 export default function Home() {
   const theme = useTheme();
   const router = useRouter();
+
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+
+  const showAlertDialog = (message: string) => {
+    setDialogMessage(message);
+    setDialogVisible(true);
+  };
+  const hideAlertDialog = () => setDialogVisible(false);
 
   // Get the window width outside of the animated component
   const screenWidth = Dimensions.get("window").width;
@@ -149,121 +161,146 @@ export default function Home() {
     );
   };
 
+  let platformMessage = "You are using a random device.";
+  switch (Platform.OS) {
+    case "ios":
+      platformMessage = "You are using an iOS device.";
+      break;
+    case "android":
+      platformMessage = "You are using an Android device.";
+      break;
+    case "web":
+      platformMessage = "You are using a web browser.";
+      break;
+  }
+
   return (
-    <ScrollView
-      style={styles.scrollContainer}
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.content}>
-        <Text variant="headlineMedium" style={styles.heading}>
-          Products & Retail Management
-        </Text>
-        <Text variant="bodyLarge" style={styles.subheading}>
-          Quick overview of your business.
-        </Text>
-
-        <Divider style={styles.divider} />
-
-        {/* --- Dashboard Cards Section --- */}
-        <Text variant="titleLarge" style={styles.sectionTitle}>
-          Dashboard
-        </Text>
-        <View style={styles.cardRow}>
-          <Animated.View
-            style={[styles.animatedCardWrapper, animatedCardStyle]}
-          >
-            <Pressable
-              onPressIn={onHoverIn}
-              onPressOut={onHoverOut}
-              onHoverIn={onHoverIn}
-              onHoverOut={onHoverOut}
-            >
-              <Card
-                style={[styles.card, { margin: 0 }]}
-                onPress={() => alert("No products in your inventory")}
-              >
-                <Card.Content style={{ alignItems: "center" }}>
-                  <MaterialCommunityIcons
-                    name="package-variant-closed"
-                    size={48}
-                    color={theme.colors.primary}
-                  />
-                  <Text variant="titleMedium" style={{ marginTop: 10 }}>
-                    Products
-                  </Text>
-                  <Text variant="bodyMedium" style={{ textAlign: "center" }}>
-                    Manage your product inventory and details.
-                  </Text>
-                </Card.Content>
-              </Card>
-            </Pressable>
-          </Animated.View>
-          <Card
-            style={styles.card}
-            onPress={() => alert("No retail locations available")}
-          >
-            <Card.Content style={{ alignItems: "center" }}>
-              <MaterialCommunityIcons
-                name="storefront"
-                size={48}
-                color={theme.colors.primary}
-              />
-              <Text variant="titleMedium" style={{ marginTop: 10 }}>
-                Retail Locations
-              </Text>
-              <Text variant="bodyMedium" style={{ textAlign: "center" }}>
-                View and manage all your retail locations.
-              </Text>
-            </Card.Content>
-          </Card>
-        </View>
-
-        <Divider style={styles.divider} />
-
-        {/* --- Swipe-to-Dismiss Section --- */}
-        <Text variant="titleLarge" style={styles.sectionTitle}>
-          Swipe-to-Dismiss
-        </Text>
-        <View style={styles.listContainer}>
-          {items.map((item) => (
-            <ListItem key={item.id} item={item} screenWidth={screenWidth} />
-          ))}
-        </View>
-
-        <Divider style={styles.divider} />
-
-        {/* --- Quick Actions Section --- */}
-        <Text variant="titleLarge" style={styles.sectionTitle}>
-          Quick Actions
-        </Text>
-        <View style={styles.buttonRow}>
-          <Button
-            mode="contained"
-            onPress={() => router.push("/screens/reports")}
-            style={styles.button}
-          >
-            View Reports
-          </Button>
-          <Button
-            mode="outlined"
-            onPress={() => router.push("/screens/profile")}
-            style={styles.button}
-          >
-            Edit Profile
-          </Button>
-        </View>
-
-        {/* A simple surface to show theme colors */}
-        <Text variant="titleMedium" style={styles.sectionSubTitle}>
-          App Theme
-        </Text>
-        <Surface style={[styles.surface, { elevation: 1 }]}>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
-            This app uses a custom theme.
+    <>
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <View style={styles.content}>
+          <Text variant="headlineMedium" style={styles.heading}>
+            Products & Retail Management
           </Text>
-        </Surface>
-      </View>
-    </ScrollView>
+          <Text variant="bodyLarge" style={styles.subheading}>
+            Quick overview of your business.
+          </Text>
+
+          <Divider style={styles.divider} />
+
+          <Text variant="bodyLarge" style={styles.platformSpecific}>
+            {platformMessage}
+          </Text>
+
+          <Divider style={styles.divider} />
+
+          {/* --- Dashboard Cards Section --- */}
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Dashboard
+          </Text>
+          <View style={styles.cardRow}>
+            <Animated.View
+              style={[styles.animatedCardWrapper, animatedCardStyle]}
+            >
+              {/* The onPress handler is moved from Card to Pressable */}
+              <Pressable
+                onPressIn={onHoverIn}
+                onPressOut={onHoverOut}
+                onHoverIn={onHoverIn}
+                onHoverOut={onHoverOut}
+                onPress={() => showAlertDialog("No products in your inventory")}
+              >
+                <Card style={[styles.card, { margin: 0 }]}>
+                  <Card.Content style={{ alignItems: "center" }}>
+                    <MaterialCommunityIcons
+                      name="package-variant-closed"
+                      size={48}
+                      color={theme.colors.primary}
+                    />
+                    <Text variant="titleMedium" style={{ marginTop: 10 }}>
+                      Products
+                    </Text>
+                    <Text variant="bodyMedium" style={{ textAlign: "center" }}>
+                      Manage your product inventory and details.
+                    </Text>
+                  </Card.Content>
+                </Card>
+              </Pressable>
+            </Animated.View>
+            <Card
+              style={styles.card}
+              onPress={() => showAlertDialog("No retail locations available")}
+            >
+              <Card.Content style={{ alignItems: "center" }}>
+                <MaterialCommunityIcons
+                  name="storefront"
+                  size={48}
+                  color={theme.colors.primary}
+                />
+                <Text variant="titleMedium" style={{ marginTop: 10 }}>
+                  Retail Locations
+                </Text>
+                <Text variant="bodyMedium" style={{ textAlign: "center" }}>
+                  View and manage all your retail locations.
+                </Text>
+              </Card.Content>
+            </Card>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {/* --- Swipe-to-Dismiss Section --- */}
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Swipe-to-Dismiss
+          </Text>
+          <View style={styles.listContainer}>
+            {items.map((item) => (
+              <ListItem key={item.id} item={item} screenWidth={screenWidth} />
+            ))}
+          </View>
+
+          <Divider style={styles.divider} />
+
+          {/* --- Quick Actions Section --- */}
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Quick Actions
+          </Text>
+          <View style={styles.buttonRow}>
+            <Button
+              onPress={() => router.push("/screens/reports")}
+              title="View Reports"
+            />
+            <Button
+              onPress={() => router.push("/screens/profile")}
+              title="Edit Profile"
+            />
+          </View>
+
+          {/* A simple surface to show theme colors */}
+          <Text variant="titleMedium" style={styles.sectionSubTitle}>
+            App Theme
+          </Text>
+          <Surface style={[styles.surface, { elevation: 1 }]}>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurface }}>
+              This app uses a custom theme.
+            </Text>
+          </Surface>
+        </View>
+      </ScrollView>
+      <Portal>
+        <Dialog visible={dialogVisible} onDismiss={hideAlertDialog}>
+          <Dialog.Title>Notice</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">{dialogMessage}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideAlertDialog}>Dismiss</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
@@ -290,6 +327,23 @@ const styles = StyleSheet.create({
   subheading: {
     marginBottom: 20,
     textAlign: "center",
+  },
+  platformSpecific: {
+    textAlign: "center",
+    ...Platform.select({
+      ios: {
+        color: "rgba(13, 71, 161, 1)",
+      },
+      android: {
+        color: "rgb(0, 174, 32)",
+      },
+      web: {
+        color: "rgb(126, 130, 138)",
+      },
+      default: {
+        color: "#f5f5f5",
+      },
+    }),
   },
   sectionTitle: {
     marginTop: 20,
